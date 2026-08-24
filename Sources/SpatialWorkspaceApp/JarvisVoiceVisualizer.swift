@@ -176,7 +176,8 @@ struct JarvisVoiceVisualizer: View {
                 + sin(angle * 13.0 + time * 1.9) * 0.20
             let voice = sin(angle * 9 - time * 5.8) * level * 0.055
             let r = radius * (1 + CGFloat(noise * turbulence + voice))
-            let point = CGPoint(x: center.x + cos(angle) * r, y: center.y + sin(angle) * r)
+            let pointAngle = CGFloat(angle)
+            let point = CGPoint(x: center.x + cos(pointAngle) * r, y: center.y + sin(pointAngle) * r)
             index == 0 ? shape.move(to: point) : shape.addLine(to: point)
         }
         shape.closeSubpath()

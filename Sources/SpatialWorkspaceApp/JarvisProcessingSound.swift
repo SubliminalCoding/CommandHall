@@ -13,11 +13,16 @@ enum JarvisProcessingSoundPattern {
         let count = max(1, Int(sampleRate * duration))
         let glitchStarts = [0.08, 0.17, 0.43, 0.51, 0.84, 1.08, 1.17, 1.42]
 
-        return (0 ..< count).map { index in
+        var result = [Float]()
+        result.reserveCapacity(count)
+        for index in 0 ..< count {
             let time = Double(index) / sampleRate
-            let edgeFade = min(1, time / 0.018, (duration - time) / 0.018)
-            let hum = sin(.pi * 2 * 62 * time) * 0.055
-                + sin(.pi * 2 * 124 * time) * 0.022
+            let fadeIn = min(1.0, time / 0.018)
+            let fadeOut = min(1.0, (duration - time) / 0.018)
+            let edgeFade = min(fadeIn, fadeOut)
+            let fundamental = sin(Double.pi * 2 * 62 * time) * 0.055
+            let overtone = sin(Double.pi * 2 * 124 * time) * 0.022
+            let hum = fundamental + overtone
             var glitches = 0.0
 
             for (pulse, start) in glitchStarts.enumerated() {
@@ -25,15 +30,19 @@ enum JarvisProcessingSoundPattern {
                 let width = 0.028 + Double(pulse % 3) * 0.009
                 guard elapsed >= 0, elapsed < width else { continue }
                 let envelope = 1 - elapsed / width
-                let carrier = sin(.pi * 2 * (1_080 + Double(pulse) * 137) * elapsed)
+                let carrierFrequency = 1_080 + Double(pulse) * 137
+                let carrier = sin(Double.pi * 2 * carrierFrequency * elapsed)
                 let digital = carrier >= 0 ? 1.0 : -1.0
-                let staticGrain = sin(.pi * 2 * (4_700 + Double(pulse) * 211) * elapsed)
+                let staticFrequency = 4_700 + Double(pulse) * 211
+                let staticGrain = sin(Double.pi * 2 * staticFrequency * elapsed)
                 glitches += (digital * 0.27 + staticGrain * 0.09) * envelope
             }
 
             let stepped = ((hum + glitches) * 18).rounded() / 18
-            return Float(max(-0.42, min(0.42, stepped)) * max(0, edgeFade))
+            let clamped = max(-0.42, min(0.42, stepped))
+            result.append(Float(clamped * max(0, edgeFade)))
         }
+        return result
     }
 }
 
