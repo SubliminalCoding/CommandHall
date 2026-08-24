@@ -2,7 +2,7 @@ d39d84ff03a3d4b889db68d802942dcd9b660717cf550cff31576c397da54c03  ./.github/ISSU
 10e8ac1bdc41f0c5d2ba843ee84a04507d229f74c9b0ec32db699437f8f82738  ./.github/ISSUE_TEMPLATE/config.yml
 a125782f4ec1e190587ac573debb7cf723a301f9eb2455ead0dbd8a8df029691  ./.github/ISSUE_TEMPLATE/feature_request.yml
 cb2ccd6dbb48078fbc7f3f39a69f357f141797d77358c7876b24d66d262e9a64  ./.github/pull_request_template.md
-d1b7a1eac445f71d9517d178d005776e218dd57f9008feab4bfe24b332143b84  ./.github/workflows/ci.yml
+5379d2ec9693889ff19f7b2372da5bd390935cafd6250fdddbd3e50a97a3ec89  ./.github/workflows/ci.yml
 8b905f009c6b0bec470148c29960136c1339243a620bc68fcc4ec13b0f1cd951  ./.gitignore
 3dece69f68e7e66cad233ebc1d7dae8e0db1879e605981a2e1857a88824380e8  ./.public-source-ignore
 143b55846b6bc35d5d2dbcc308cd1a0f2d3a3d87b34c09fba85faef881fd86fb  ./CONTRIBUTING.md
