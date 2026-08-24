@@ -52,43 +52,29 @@ struct AgentAccessSettingsView: View {
                     .keyboardShortcut(.cancelAction)
             }
 
-            VStack(alignment: .leading, spacing: 9) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text("DEFAULT FOR NEW SESSIONS")
                     .font(.system(size: 9, weight: .bold))
                     .tracking(0.7)
                     .foregroundStyle(.secondary)
-                HStack(spacing: 9) {
-                    ForEach(SessionAuthorityProfile.allCases) { option in
-                        Button { profile = option } label: {
-                            HStack(alignment: .top, spacing: 9) {
-                                Image(systemName: option.symbol)
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(option == .unrestricted ? Color.orange : WorkspaceVisualStyle.accent)
-                                    .frame(width: 24)
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(option.label).font(.system(size: 12, weight: .semibold))
-                                    Text(option.detail)
-                                        .font(.system(size: 9.5))
-                                        .foregroundStyle(.secondary)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                                Spacer(minLength: 0)
-                            }
-                            .padding(11)
-                            .frame(maxWidth: .infinity, minHeight: 92, alignment: .topLeading)
-                            .background(.white.opacity(profile == option ? 0.09 : 0.035), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 11, style: .continuous)
-                                    .stroke(profile == option ? (option == .unrestricted ? Color.orange : WorkspaceVisualStyle.accent).opacity(0.62) : .white.opacity(0.07))
-                            )
+                HStack(spacing: 12) {
+                    Label("Default authority", systemImage: profile.symbol)
+                        .font(.system(size: 12, weight: .semibold))
+                    Spacer()
+                    Picker("Default authority", selection: $profile) {
+                        ForEach(SessionAuthorityProfile.allCases) { option in
+                            Text(option.label).tag(option)
                         }
-                        .buttonStyle(WorkspaceHoverButtonStyle(cornerRadius: 11))
-                        .accessibilityAddTraits(profile == option ? .isSelected : [])
                     }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
                 }
+                Text(profile.detail)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
                 if profile == .unrestricted {
                     Label(
-                        "Unrestricted disables provider approvals and sandboxes. Prefer approving it once from the inbox for work that actually needs the wider boundary.",
+                        "Unrestricted disables provider approvals and sandboxing. macOS privacy controls still apply.",
                         systemImage: "exclamationmark.shield.fill"
                     )
                     .font(.system(size: 10))
@@ -96,7 +82,7 @@ struct AgentAccessSettingsView: View {
                 }
             }
             .padding(14)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             VStack(alignment: .leading, spacing: 9) {
                 Text("OPEN CODING SESSIONS")
@@ -130,7 +116,7 @@ struct AgentAccessSettingsView: View {
                 }
             }
             .padding(14)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Additional accessible folder").font(.headline)
@@ -139,12 +125,12 @@ struct AgentAccessSettingsView: View {
                         .textFieldStyle(.roundedBorder)
                     Button("Choose…", action: chooseFolder)
                 }
-                Text("This folder is passed with `--add-dir` only to unrestricted runs. Lower profiles remain bounded to their attached workspace; macOS privacy controls still apply.")
+                Text("Passed with --add-dir only to unrestricted runs. Lower profiles stay bounded to their attached workspace; macOS privacy controls still apply.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             .padding(14)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .background(.white.opacity(0.04), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             Toggle(isOn: $usesSparkHandoff) {
                 VStack(alignment: .leading, spacing: 2) {

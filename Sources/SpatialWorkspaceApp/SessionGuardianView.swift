@@ -18,13 +18,7 @@ struct SessionGuardianView: View {
                     .frame(width: 500, height: 300)
             }
         }
-        .background(
-            LinearGradient(
-                colors: [WorkspaceVisualStyle.panelTint, Color(red: 0.025, green: 0.035, blue: 0.075)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .background(WorkspaceVisualStyle.panelTint)
     }
 
     private func guardian(_ node: WorkspaceNode) -> some View {
@@ -32,13 +26,10 @@ struct SessionGuardianView: View {
         let runtime = store.sessionRuntimeState(for: node)
         return VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top, spacing: 12) {
-                ZStack {
-                    Circle().fill(statusColor(runtime).opacity(0.14))
-                    Image(systemName: "heart.text.square.fill")
-                        .font(.system(size: 19, weight: .semibold))
-                        .foregroundStyle(statusColor(runtime))
-                }
-                .frame(width: 42, height: 42)
+                Image(systemName: "heart.text.square")
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(statusColor(runtime))
+                    .frame(width: 28, height: 28)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Session Guardian")
                         .font(.system(size: 20, weight: .semibold, design: .rounded))
@@ -56,52 +47,31 @@ struct SessionGuardianView: View {
                     .accessibilityLabel("Close Session Guardian")
             }
 
-            HStack(spacing: 10) {
-                healthCard(title: "RUNTIME", value: runtime.label, detail: node.runtimeDetail ?? runtimeDetail(runtime), color: statusColor(runtime))
-                healthCard(title: "READINESS", value: diagnostic.isReady ? "Ready" : "Action needed", detail: diagnostic.title, color: diagnostic.isReady ? .green : .orange)
-                healthCard(title: "OWNERSHIP", value: ownershipLabel(node), detail: ownershipDetail(node), color: .cyan)
-            }
-
-            VStack(alignment: .leading, spacing: 9) {
-                Text("DIAGNOSTICS").guardianLabel()
-                diagnosticRow("Working folder", detail: store.sessionWorkingFolderLabel(for: node.id), symbol: "folder")
-                diagnosticRow("Executable", detail: diagnostic.executablePath ?? "Not required or unavailable", symbol: "terminal")
-                if node.isCodingAgent {
-                    diagnosticRow("Authority", detail: node.resolvedAuthorityProfile.label, symbol: node.resolvedAuthorityProfile.symbol)
-                    diagnosticRow(
-                        "Linux handoff",
-                        detail: AgentCapabilitySettings.usesSparkHandoff ? "ssh \(AgentCapabilitySettings.sparkHost)" : "Disabled",
-                        symbol: "server.rack"
-                    )
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 7) {
+                    Circle()
+                        .fill(statusColor(runtime))
+                        .frame(width: 7, height: 7)
+                    Text(runtime.label)
+                        .font(.system(size: 14, weight: .semibold))
+                    Spacer()
+                    if !diagnostic.isReady {
+                        Label("Action needed", systemImage: "exclamationmark.triangle.fill")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(.orange)
+                    }
                 }
-                diagnosticRow("Conversation", detail: node.sessionID ?? "A new provider session will be created", symbol: "bubble.left.and.bubble.right")
-                diagnosticRow("Last check", detail: diagnostic.checkedAt.formatted(date: .omitted, time: .standard), symbol: "clock")
+                Text(node.runtimeDetail ?? runtimeDetail(runtime))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                if !diagnostic.isReady {
+                    Text(diagnostic.title)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.orange)
+                }
             }
-            .padding(12)
+            .padding(13)
             .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-
-            if let run = store.latestRun(for: node.id) {
-                VStack(alignment: .leading, spacing: 7) {
-                    Text("LAST RUN").guardianLabel()
-                    HStack {
-                        Text(run.request)
-                            .font(.system(size: 11, weight: .medium))
-                            .lineLimit(2)
-                        Spacer()
-                        Text(run.state.rawValue.replacingOccurrences(of: "readyToReview", with: "ready to review"))
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(.secondary)
-                    }
-                    if let summary = run.summary {
-                        Text(summary).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(2)
-                    }
-                    Text("Authority used: \((run.authorityProfile ?? node.resolvedAuthorityProfile).label)\(run.approvalID == nil ? "" : " · approved once")")
-                        .font(.system(size: 9))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(12)
-                .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-            }
 
             HStack(spacing: 8) {
                 if node.kind == .agent, node.status == .working {
@@ -121,7 +91,7 @@ struct SessionGuardianView: View {
                         store.restartTerminal(node.id)
                         isPresented = false
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
                 }
                 if (node.kind == .agent || node.kind == .terminal),
                    node.status == .needsAttention || runtime == .interrupted || runtime == .unavailable {
@@ -134,21 +104,51 @@ struct SessionGuardianView: View {
                         .buttonStyle(.bordered)
                 }
             }
+
+            DisclosureGroup("Session details") {
+                VStack(alignment: .leading, spacing: 7) {
+                    diagnosticRow("Readiness", detail: diagnostic.isReady ? "Ready" : diagnostic.title, symbol: diagnostic.isReady ? "checkmark.circle" : "exclamationmark.triangle")
+                    diagnosticRow("Working folder", detail: store.sessionWorkingFolderLabel(for: node.id), symbol: "folder")
+                    diagnosticRow("Executable", detail: diagnostic.executablePath ?? "Not required or unavailable", symbol: "terminal")
+                    if node.isCodingAgent {
+                        diagnosticRow("Authority", detail: node.resolvedAuthorityProfile.label, symbol: node.resolvedAuthorityProfile.symbol)
+                        diagnosticRow(
+                            "Linux handoff",
+                            detail: AgentCapabilitySettings.usesSparkHandoff ? "ssh \(AgentCapabilitySettings.sparkHost)" : "Disabled",
+                            symbol: "server.rack"
+                        )
+                    }
+                    diagnosticRow("Conversation", detail: node.sessionID ?? "A new provider session will be created", symbol: "bubble.left.and.bubble.right")
+                    diagnosticRow("Ownership", detail: "\(ownershipLabel(node)) · \(ownershipDetail(node))", symbol: "person.crop.circle.badge.checkmark")
+                    diagnosticRow("Last check", detail: diagnostic.checkedAt.formatted(date: .omitted, time: .standard), symbol: "clock")
+
+                    if let run = store.latestRun(for: node.id) {
+                        Divider().opacity(0.5)
+                        HStack {
+                            Text(run.request)
+                                .font(.system(size: 11, weight: .medium))
+                                .lineLimit(2)
+                            Spacer()
+                            Text(run.state.rawValue.replacingOccurrences(of: "readyToReview", with: "ready to review"))
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(.secondary)
+                        }
+                        if let summary = run.summary {
+                            Text(summary).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(2)
+                        }
+                        Text("Authority used: \((run.authorityProfile ?? node.resolvedAuthorityProfile).label)\(run.approvalID == nil ? "" : " · approved once")")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .font(.system(size: 11, weight: .semibold))
+            .tint(.secondary)
+            .padding(12)
+            .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
         }
         .padding(22)
         .frame(width: 620)
-    }
-
-    private func healthCard(title: String, value: String, detail: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(title).guardianLabel()
-            Text(value).font(.system(size: 13, weight: .semibold)).foregroundStyle(color)
-            Text(detail).font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(2)
-        }
-        .padding(11)
-        .frame(maxWidth: .infinity, minHeight: 82, alignment: .topLeading)
-        .background(.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(color.opacity(0.16)))
     }
 
     private func diagnosticRow(_ title: String, detail: String, symbol: String) -> some View {
@@ -202,13 +202,5 @@ struct SessionGuardianView: View {
         case .exited: .green
         case .idle: .white.opacity(0.55)
         }
-    }
-}
-
-private extension Text {
-    func guardianLabel() -> some View {
-        font(.system(size: 8, weight: .bold))
-            .foregroundStyle(.secondary)
-            .tracking(0.75)
     }
 }

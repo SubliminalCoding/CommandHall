@@ -69,7 +69,7 @@ struct ReleaseDiagnosticsView: View {
 
             GroupBox("Updates") {
                 HStack {
-                    Text("Releases are signed and notarized before publication. The CommandHall product page is the authoritative update source.")
+                    Text("The CommandHall product page is the authoritative source for signed, notarized releases.")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                     Spacer()

@@ -8,9 +8,9 @@ struct ApprovalInboxView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Approval inbox")
+                    Text("Approvals")
                         .font(.system(size: 20, weight: .bold))
-                    Text("Boundary-expanding requests in \(store.activeWorkspace.name)")
+                    Text("Requests that expand a session’s authority in \(store.activeWorkspace.name)")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
@@ -24,7 +24,7 @@ struct ApprovalInboxView: View {
                 ContentUnavailableView {
                     Label("Nothing needs you", systemImage: "checkmark.shield")
                 } description: {
-                    Text("Requests appear here only when a task seems to need more authority than its session currently has.")
+                    Text("Authority requests appear when a session needs a wider boundary.")
                 }
             } else {
                 List(store.pendingAuthorityApprovals) { approval in
@@ -54,7 +54,7 @@ struct ApprovalInboxView: View {
                                 .foregroundStyle(.orange)
                         }
                         HStack {
-                            Button("Reject", role: .destructive) {
+                            Button("Reject") {
                                 store.rejectAuthorityRequest(approval.id)
                             }
                             Spacer()
