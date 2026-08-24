@@ -10,6 +10,14 @@ UPDATE_VISUAL_GOLDENS=1 swift test --filter WorkspaceVisualRegressionTests
 
 Review every changed image before committing it. A changed baseline is an explicit product decision, not routine test maintenance.
 
+CI uses reviewed `*.macos-15.jpg` baselines because SwiftUI rendering differs slightly between macOS releases. Regenerate that variant on a macOS 15 host with:
+
+```sh
+COMMANDHALL_VISUAL_GOLDEN_VARIANT=macos-15 UPDATE_VISUAL_GOLDENS=1 swift test --filter WorkspaceVisualRegressionTests
+```
+
+Variant selection changes only the baseline filename. Dimensions and both pixel-difference limits remain identical.
+
 ## Determinism controls
 
 - External Stage, OBS, VTuber, speech, and SignalDeck activity is not started.

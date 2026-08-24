@@ -29,6 +29,8 @@ jobs:
         run: swift --version
 
       - name: Test, release-compile, package, and smoke-test
+        env:
+          COMMANDHALL_VISUAL_GOLDEN_VARIANT: macos-15
         run: scripts/ci.sh
 
       - name: Upload visual diffs on failure

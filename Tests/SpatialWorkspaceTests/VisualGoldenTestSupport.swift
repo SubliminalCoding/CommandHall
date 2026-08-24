@@ -33,7 +33,7 @@ enum VisualGoldenTestSupport {
             scale: scale
         )
         let goldenDirectory = visualGoldenDirectory(relativeTo: file)
-        let goldenURL = goldenDirectory.appendingPathComponent("\(name).jpg")
+        let goldenURL = goldenDirectory.appendingPathComponent(goldenFilename(for: name))
 
         if ProcessInfo.processInfo.environment["UPDATE_VISUAL_GOLDENS"] == "1" {
             try FileManager.default.createDirectory(at: goldenDirectory, withIntermediateDirectories: true)
@@ -95,6 +95,19 @@ enum VisualGoldenTestSupport {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent("VisualGoldens", isDirectory: true)
+    }
+
+    private static func goldenFilename(for name: String) -> String {
+        guard let variant = ProcessInfo.processInfo.environment["COMMANDHALL_VISUAL_GOLDEN_VARIANT"],
+              !variant.isEmpty else {
+            return "\(name).jpg"
+        }
+
+        precondition(
+            variant.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber || $0 == "-" || $0 == "_") },
+            "Visual golden variants may contain only ASCII letters, numbers, hyphens, and underscores."
+        )
+        return "\(name).\(variant).jpg"
     }
 
     private static func hostedImageData<V: View>(_ view: V, size: CGSize, scale: CGFloat) throws -> Data {
