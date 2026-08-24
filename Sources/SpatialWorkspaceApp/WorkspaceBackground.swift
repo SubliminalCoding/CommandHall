@@ -389,8 +389,10 @@ private struct BackgroundActivity: View {
         }
 
         let orbitCenter = CGPoint(x: size.width * 0.78, y: size.height * 0.68)
-        let angle = time * 0.12
-        let orbiter = CGPoint(x: orbitCenter.x + cos(angle) * size.width * 0.10, y: orbitCenter.y + sin(angle) * size.height * 0.045)
+        let angle = CGFloat(time * 0.12)
+        let orbitX = cos(angle) * size.width * 0.10
+        let orbitY = sin(angle) * size.height * 0.045
+        let orbiter = CGPoint(x: orbitCenter.x + orbitX, y: orbitCenter.y + orbitY)
         context.stroke(Path(ellipseIn: CGRect(x: orbitCenter.x - size.width * 0.10, y: orbitCenter.y - size.height * 0.045, width: size.width * 0.20, height: size.height * 0.09)), with: .color(theme.accent.opacity(0.12)), lineWidth: 1)
         context.fill(Path(ellipseIn: CGRect(x: orbiter.x - 3, y: orbiter.y - 3, width: 6, height: 6)), with: .color(theme.accent.opacity(0.8)))
     }
@@ -428,12 +430,15 @@ private struct BackgroundActivity: View {
     private func drawAbyss(context: inout GraphicsContext, size: CGSize, time: Double) {
         for band in 0 ..< 4 {
             var caustic = Path()
-            let baseline = size.height * (0.12 + Double(band) * 0.055)
+            let baseline = size.height * (0.12 + CGFloat(band) * 0.055)
             for step in 0 ... 48 {
-                let x = Double(step) / 48 * size.width
-                let y = baseline
-                    + sin(x / max(size.width, 1) * .pi * 4.0 + time * 0.22 + Double(band)) * 8
-                    + sin(x / max(size.width, 1) * .pi * 9.0 - time * 0.14) * 3
+                let x = CGFloat(step) / 48 * size.width
+                let normalizedX = x / max(size.width, 1)
+                let primaryPhase = normalizedX * .pi * 4.0 + CGFloat(time * 0.22 + Double(band))
+                let secondaryPhase = normalizedX * .pi * 9.0 - CGFloat(time * 0.14)
+                let primaryWave = sin(primaryPhase) * 8
+                let secondaryWave = sin(secondaryPhase) * 3
+                let y = baseline + primaryWave + secondaryWave
                 if step == 0 { caustic.move(to: CGPoint(x: x, y: y)) } else { caustic.addLine(to: CGPoint(x: x, y: y)) }
             }
             context.stroke(caustic, with: .color(theme.accent.opacity(0.07)), style: StrokeStyle(lineWidth: 7, lineCap: .round))
