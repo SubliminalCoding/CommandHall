@@ -1,0 +1,7 @@
+# Spatial agent bridge security boundary
+
+`spatial-agent` exposes four bounded audio operations: status, plan, apply, and panic mute. Spatial Workspace owns the Unix socket and the SignalDeck client. Each child receives a bridge credential bound to its session, node, provider, and operation scopes. Successful requests renew a 30-minute idle window, with an absolute 12-hour limit; process and node shutdown still revoke the credential immediately. `SPATIAL_AGENT_SESSION_EXPIRES_AT_MS` reports the initial idle deadline for diagnostics, but the broker remains authoritative after renewal. The socket directory is owner-only, the socket rejects other user IDs, credentials are stored as hashes, and inherited `SPATIAL_AGENT_*` values are removed before a fresh identity is injected.
+
+The child environment never receives SignalDeck's read or write token. Exposure-increasing plans created while the live state is live or unknown remain proposals: the creating agent cannot apply them, and only the Signal Deck operator approval action can proceed. Privacy-reducing plans and panic mute remain available through the bridge.
+
+This is an authority broker, not an OS sandbox. Full Capability agents intentionally run as the logged-in macOS user with home-folder access. A same-UID process can read files that user can read, including owner-only files, if it discovers their paths. Preventing that requires a separate OS identity or a signed-app Keychain access-control list; Unix socket permissions alone cannot provide same-user isolation.

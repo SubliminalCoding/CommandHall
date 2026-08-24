@@ -1,0 +1,20 @@
+.DS_Store
+.build/
+build/
+dist/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+corpora/maxbladetv/primary_sources/audio/
+corpora/maxbladetv/primary_sources/whisper/
+Tests/VisualGoldens/Failures/
+*.actual.png
+*.actual.jpg
+*.diff.png
+.skill-loop-progress.md
+.preview-feature-backup/
+
+# Large content/reference material kept on disk but out of version control
+corpora/
+references/demo/

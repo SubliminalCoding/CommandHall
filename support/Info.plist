@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>CommandHall</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.bilbroswagginz.commandhall</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+	<key>CFBundleName</key>
+	<string>CommandHall</string>
+	<key>CFBundleDisplayName</key>
+	<string>CommandHall</string>
+	<key>CFBundleIconFile</key>
+	<string>CommandHall</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Voice commands let you direct workspaces, agents, and tools without leaving the surface.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>On-device speech recognition listens for the “Jarvis” wake word so you can talk to Jarvis hands-free.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>The OBS control room displays OBS Virtual Camera as its local Program preview.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>The Stage can show a read-only live view of Terminal tabs you choose on this Mac.</string>
+</dict>
+</plist>

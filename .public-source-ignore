@@ -1,0 +1,40 @@
+# Private development history and local evidence
+.preview-feature-backup/**
+.skill-loop-progress.md
+COMMERCIAL-LICENSE.md
+README.md
+Tests/artifacts/**
+.github/workflows/release.yml
+
+# Research inputs that are not licensed for redistribution
+corpora/**
+references/**
+scripts/build-maxbladetv-*
+scripts/extract-maxbladetv-*
+scripts/validate-corpus.py
+scripts/validate-distillations.py
+scripts/validate-operators.py
+specs/IDEA-WIZARD-*
+specs/OFFICIAL-DEMO-BEHAVIOR.md
+specs/product_naming.md
+
+# Workstation-specific operational material
+scripts/generate-flow-state-music3.py
+scripts/generate-longform-trance-music3.py
+scripts/obs-stream-preset/**
+scripts/run-flow-state-music3-on-spark.sh
+support/the-stage-*
+
+# Historical prototypes and internal reports
+archive/**
+breakout.html
+catch.html
+snake.html
+PLAN.md
+specs/ACCEPTANCE-RESULTS.md
+specs/BROWSER-MUSIC-END-TO-END-2026-08-15.md
+specs/HARDENING-ROADMAP-2026-08-24.md
+specs/MULTI-PASS-BUG-HUNT-2026-08-15.md
+specs/REALITY-UX-HARDENING-2026-08-15.md
+specs/UI-POLISH-FIVE-PASS-2026-08-15.md
+specs/WORKSPACE-PERFORMANCE-PROFILE-2026-08-22.md

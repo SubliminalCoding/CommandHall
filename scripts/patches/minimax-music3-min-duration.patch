@@ -1,0 +1,45 @@
+--- encoders.py
++++ encoders.py
+@@ -258,6 +258,15 @@
+                     "Capped at 9000 frames (six minutes)."
+                 ),
+             ),
++            InputParam(
++                "min_audio_duration",
++                default=0.0,
++                type_hint=float,
++                description=(
++                    "Lower bound on generated audio length in seconds. The audio end token is suppressed until "
++                    "this duration is reached. Must not exceed audio_duration."
++                ),
++            ),
+             InputParam.template("generator"),
+         ]
+ 
+@@ -278,6 +287,10 @@
+     def check_inputs(block_state):
+         if block_state.audio_duration <= 0:
+             raise ValueError(f"`audio_duration` must be positive, got {block_state.audio_duration}")
++        if block_state.min_audio_duration < 0:
++            raise ValueError(f"`min_audio_duration` must not be negative, got {block_state.min_audio_duration}")
++        if block_state.min_audio_duration > block_state.audio_duration:
++            raise ValueError("`min_audio_duration` must not exceed `audio_duration`")
+ 
+     @torch.no_grad()
+     def __call__(self, components: MiniMaxMusic3ModularPipeline, state: PipelineState) -> PipelineState:
+@@ -287,6 +300,7 @@
+ 
+         text_ids = block_state.text_ids
+         max_frames = min(int(block_state.audio_duration * components.frame_rate), _MAX_AUDIO_FRAMES)
++        min_frames = min(int(block_state.min_audio_duration * components.frame_rate), max_frames)
+         if max_frames == 0:
+             raise ValueError(
+                 f"`audio_duration` {block_state.audio_duration} is shorter than one audio frame "
+@@ -333,6 +347,8 @@
+             guided = guided.masked_fill(conditional < threshold, -float("inf"))
+             guided = guided.masked_fill(vocab_mask.unsqueeze(0), -float("inf"))
++            if frame_index < min_frames:
++                guided[..., _AUDIO_END_TOKEN_ID] = -float("inf")
+             sampled = _sample_top_k(guided, generator)
+             if int(sampled.item()) == _AUDIO_END_TOKEN_ID:
+                 break
