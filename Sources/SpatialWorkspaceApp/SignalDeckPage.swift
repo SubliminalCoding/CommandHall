@@ -3,6 +3,9 @@ import SwiftUI
 struct SignalDeckPage: View {
     @ObservedObject var controller: SignalDeckController
     let theme: WorkspaceTheme
+    @State private var showsRoutingDetails = false
+    @State private var showsReadiness = false
+    @State private var showsChangeRecord = false
 
     var body: some View {
         WorkspacePageScaffold(theme: theme) {
@@ -11,18 +14,9 @@ struct SignalDeckPage: View {
             actionFeedback
             pendingApprovalSection
             profileSection
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: WorkspacePageMetrics.sectionSpacing) {
-                    sourceSection.frame(maxWidth: .infinity)
-                    busSection.frame(maxWidth: .infinity)
-                }
-                VStack(spacing: WorkspacePageMetrics.sectionSpacing) {
-                    sourceSection
-                    busSection
-                }
-            }
-            checkSection
-            changeRecordSection
+            routingDetails
+            readinessDetails
+            changeRecordDetails
         }
         .accessibilityLabel("Signal Deck audio routing page")
     }
@@ -32,7 +26,7 @@ struct SignalDeckPage: View {
             eyebrow: "Audio Routing",
             symbol: "waveform.path.ecg.rectangle",
             title: "Signal Deck",
-            subtitle: "Configure who you hear, what OBS receives, and which sources stay private.",
+            subtitle: "Choose what you hear and what OBS receives.",
             accent: theme.accent
         ) {
             VStack(alignment: .trailing, spacing: 8) {
@@ -49,11 +43,6 @@ struct SignalDeckPage: View {
                     )
                 }
                 pageActions
-                Text(controller.detail)
-                    .font(WorkspacePageTypography.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.trailing)
-                    .frame(maxWidth: 430, alignment: .trailing)
             }
         }
     }
@@ -162,7 +151,7 @@ struct SignalDeckPage: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeading(
                 "PROFILES",
-                detail: "A profile changes the durable logical graph atomically. Configured does not mean applied to live audio."
+                detail: "Choose the durable routing graph. Live application is reported above."
             )
             if let profiles = controller.profiles?.profiles, !profiles.isEmpty {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 250), spacing: 10)], spacing: 10) {
@@ -236,7 +225,7 @@ struct SignalDeckPage: View {
 
     private var sourceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeading("SOURCES", detail: "Current logical destinations. Unavailable sources have not been bound to a macOS process yet.")
+            sectionHeading("SOURCES", detail: "Logical destinations; unavailable sources are not bound to a process.")
             if let sources = controller.snapshot?.sources, !sources.isEmpty {
                 ForEach(sources) { source in
                     VStack(alignment: .leading, spacing: 7) {
@@ -269,36 +258,7 @@ struct SignalDeckPage: View {
                                 .font(WorkspacePageTypography.metadata)
                                 .foregroundStyle(theme.accent.opacity(0.82))
                         }
-                        LazyVGrid(
-                            columns: [GridItem(.adaptive(minimum: 92), spacing: 6)],
-                            alignment: .leading,
-                            spacing: 6
-                        ) {
-                            semanticButton(
-                                "Private",
-                                symbol: "headphones",
-                                action: .listenPrivately(sourceID: source.id)
-                            )
-                            if source.targetBusIds.contains("stream-mix") {
-                                semanticButton(
-                                    "Exclude",
-                                    symbol: "rectangle.slash",
-                                    action: .excludeFromStream(sourceID: source.id)
-                                )
-                            } else {
-                                semanticButton(
-                                    "Include",
-                                    symbol: "dot.radiowaves.left.and.right",
-                                    action: .includeInStream(sourceID: source.id),
-                                    tint: .orange
-                                )
-                            }
-                            semanticButton(
-                                "Mute",
-                                symbol: "speaker.slash.fill",
-                                action: .muteSource(sourceID: source.id)
-                            )
-                        }
+                        sourceActions(source)
                     }
                     .padding(10)
                     .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
@@ -312,7 +272,7 @@ struct SignalDeckPage: View {
 
     private var busSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeading("BUSES", detail: "Named destinations and their current logical controls.")
+            sectionHeading("BUSES", detail: "Destinations and their current logical controls.")
             if let buses = controller.snapshot?.buses, !buses.isEmpty {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 190), spacing: 8)], spacing: 8) {
                     ForEach(buses) { bus in
@@ -406,6 +366,52 @@ struct SignalDeckPage: View {
             }
         }
         .workspaceSectionCard()
+    }
+
+    private var routingDetails: some View {
+        DisclosureGroup(isExpanded: $showsRoutingDetails) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .top, spacing: WorkspacePageMetrics.sectionSpacing) {
+                    sourceSection.frame(maxWidth: .infinity)
+                    busSection.frame(maxWidth: .infinity)
+                }
+                VStack(spacing: WorkspacePageMetrics.sectionSpacing) {
+                    sourceSection
+                    busSection
+                }
+            }
+            .padding(.top, 10)
+        } label: {
+            Label("Routing details", systemImage: "point.3.connected.trianglepath.dotted")
+                .font(WorkspacePageTypography.body.weight(.semibold))
+        }
+        .tint(theme.accent)
+        .workspaceSectionCard(padding: 14, cornerRadius: 16, tintOpacity: 0.45)
+    }
+
+    private var readinessDetails: some View {
+        DisclosureGroup(isExpanded: $showsReadiness) {
+            checkSection
+                .padding(.top, 10)
+        } label: {
+            Label("Readiness checks", systemImage: readinessDisclosureSymbol)
+                .font(WorkspacePageTypography.body.weight(.semibold))
+                .foregroundStyle(readinessDisclosureColor)
+        }
+        .tint(theme.accent)
+        .workspaceSectionCard(padding: 14, cornerRadius: 16, tintOpacity: 0.45)
+    }
+
+    private var changeRecordDetails: some View {
+        DisclosureGroup(isExpanded: $showsChangeRecord) {
+            changeRecordSection
+                .padding(.top, 10)
+        } label: {
+            Label("Receipts and change log", systemImage: "list.bullet.clipboard")
+                .font(WorkspacePageTypography.body.weight(.semibold))
+        }
+        .tint(theme.accent)
+        .workspaceSectionCard(padding: 14, cornerRadius: 16, tintOpacity: 0.45)
     }
 
     private var changeRecordSection: some View {
@@ -513,15 +519,17 @@ struct SignalDeckPage: View {
             .foregroundStyle(.red)
             .disabled(!controller.canPlan(.panicMute))
             .help("Close the Stream safety gate and persist every route and bus muted")
-            WorkspaceIconButton(
-                symbol: "arrow.clockwise",
-                label: "Reconnect to Signal Deck",
-                size: 30,
-                showsHoverLabel: true,
-                hoverCalloutPlacement: .below,
-                action: controller.reconnect
-            )
-            .help("Reload owner-only discovery and request a full snapshot")
+            Menu {
+                Button("Reconnect to Signal Deck", systemImage: "arrow.clockwise", action: controller.reconnect)
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 13, weight: .semibold))
+                    .frame(width: 30, height: 30)
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .help("Signal Deck connection actions")
+            .accessibilityLabel("Signal Deck connection actions")
         }
         .workspaceTopToolbar()
     }
@@ -555,23 +563,56 @@ struct SignalDeckPage: View {
             .foregroundStyle(color)
     }
 
-    private func semanticButton(
-        _ title: String,
-        symbol: String,
-        action: SignalDeckSemanticAction,
-        tint: Color? = nil
-    ) -> some View {
-        Button {
-            Task { await controller.requestFromUI(action) }
+    private func sourceActions(_ source: SignalDeckSource) -> some View {
+        let streamAction: SignalDeckSemanticAction = source.targetBusIds.contains("stream-mix")
+            ? .excludeFromStream(sourceID: source.id)
+            : .includeInStream(sourceID: source.id)
+        return Menu {
+            Button("Listen privately", systemImage: "headphones") {
+                Task { await controller.requestFromUI(.listenPrivately(sourceID: source.id)) }
+            }
+            .disabled(!controller.canPlan(.listenPrivately(sourceID: source.id)))
+
+            Button(
+                source.targetBusIds.contains("stream-mix") ? "Exclude from stream" : "Include in stream",
+                systemImage: source.targetBusIds.contains("stream-mix") ? "rectangle.slash" : "dot.radiowaves.left.and.right"
+            ) {
+                Task { await controller.requestFromUI(streamAction) }
+            }
+            .disabled(!controller.canPlan(streamAction))
+
+            Divider()
+            Button("Mute source", systemImage: "speaker.slash.fill") {
+                Task { await controller.requestFromUI(.muteSource(sourceID: source.id)) }
+            }
+            .disabled(!controller.canPlan(.muteSource(sourceID: source.id)))
         } label: {
-            Label(title, systemImage: symbol)
+            Label("Route", systemImage: "slider.horizontal.3")
                 .font(.system(size: 11, weight: .semibold))
         }
-        .buttonStyle(.bordered)
-        .controlSize(.small)
-        .tint(tint ?? theme.accent)
-        .disabled(!controller.canPlan(action))
-        .frame(maxWidth: .infinity)
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .accessibilityLabel("Route \(source.displayName)")
+    }
+
+    private var readinessDisclosureSymbol: String {
+        guard let checks = controller.snapshot?.checks, !checks.isEmpty else {
+            return "questionmark.circle"
+        }
+        if checks.contains(where: { $0.status != "pass" && $0.status != "warn" }) {
+            return "xmark.octagon.fill"
+        }
+        if checks.contains(where: { $0.status == "warn" }) {
+            return "exclamationmark.triangle.fill"
+        }
+        return "checkmark.circle.fill"
+    }
+
+    private var readinessDisclosureColor: Color {
+        guard let checks = controller.snapshot?.checks, !checks.isEmpty else { return .secondary }
+        if checks.contains(where: { $0.status != "pass" && $0.status != "warn" }) { return .red }
+        if checks.contains(where: { $0.status == "warn" }) { return .orange }
+        return .green
     }
 
     private func auditColor(_ kind: SignalDeckAuditKind) -> Color {
@@ -635,7 +676,7 @@ struct SignalDeckPage: View {
 
     private var truthDetail: String {
         if !controller.isAuthoritative {
-            return "Controls are disabled until Signal Deck reconnects and confirms a fresh revision. Source, bus, profile, and readiness values below may be stale."
+            return "\(controller.detail) Controls are disabled until Signal Deck confirms a fresh revision; values below may be stale."
         }
         if !controller.configurationAvailable {
             return "SignalDeck preserved the original state file and disabled mutations. Repair it in SignalDeck before changing profiles."

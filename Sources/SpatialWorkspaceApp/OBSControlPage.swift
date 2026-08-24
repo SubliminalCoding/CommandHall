@@ -16,11 +16,11 @@ struct OBSControlPage: View {
         WorkspacePageScaffold(theme: activeTheme) {
             pageHeader
             systemAlert
-            statusStrip
-            controlSurface
+            liveStatus
             directorConsole
                 .frame(maxWidth: 900)
                 .frame(maxWidth: .infinity)
+            controlSurface
         }
         .onAppear {
             controller.start()
@@ -60,10 +60,10 @@ struct OBSControlPage: View {
 
     private var pageHeader: some View {
         WorkspacePageHeader(
-            eyebrow: "Stream control",
+            eyebrow: "Live production",
             symbol: "dot.radiowaves.left.and.right",
-            title: "OBS Control Room",
-            subtitle: "Watch Program, take scenes, direct the camera, and preserve production-bound recordings without leaving the workspace.",
+            title: "OBS",
+            subtitle: "Watch Program and make controlled production changes.",
             accent: activeTheme.accent
         ) {
             ViewThatFits(in: .horizontal) {
@@ -89,32 +89,20 @@ struct OBSControlPage: View {
     }
 
     private var headerActions: some View {
-        HStack(spacing: 2) {
-            WorkspaceIconButton(
-                symbol: "arrow.clockwise",
-                label: "Reconnect ClawStudio and OBS",
-                size: 30,
-                showsHoverLabel: true,
-                hoverCalloutPlacement: .below,
-                action: controller.reconnect
-            )
-            WorkspaceIconButton(
-                symbol: "display",
-                label: "Open OBS",
-                size: 30,
-                showsHoverLabel: true,
-                hoverCalloutPlacement: .below,
-                action: controller.openOBS
-            )
-            WorkspaceIconButton(
-                symbol: "safari",
-                label: "Open ClawStudio",
-                size: 30,
-                showsHoverLabel: true,
-                hoverCalloutPlacement: .below,
-                action: controller.openClawStudio
-            )
+        Menu {
+            Button("Reconnect ClawStudio and OBS", systemImage: "arrow.clockwise", action: controller.reconnect)
+            Divider()
+            Button("Open OBS", systemImage: "display", action: controller.openOBS)
+            Button("Open ClawStudio", systemImage: "safari", action: controller.openClawStudio)
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 13, weight: .semibold))
+                .frame(width: 30, height: 30)
         }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .help("OBS and ClawStudio actions")
+        .accessibilityLabel("OBS and ClawStudio actions")
         .workspaceTopToolbar()
     }
 
@@ -160,30 +148,36 @@ struct OBSControlPage: View {
         }
     }
 
-    private var statusStrip: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 8)], alignment: .leading, spacing: 8) {
+    private var liveStatus: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                liveStatusContent
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                liveStatusContent
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var liveStatusContent: some View {
+        WorkspaceStatusPill(
+            controller.snapshotIsAuthoritative ? recordingLabel : observedStatusLabel("Recording"),
+            detail: controller.recording?.active == true ? controller.recording?.timecode : "No active take",
+            tone: recordingTone,
+            symbol: controller.recording?.active == true ? "record.circle.fill" : "record.circle"
+        )
+        WorkspaceStatusPill(
+            controller.snapshotIsAuthoritative ? streamLabel : observedStatusLabel("Stream"),
+            detail: controller.stream?.active == true ? controller.stream?.timecode : "Not live",
+            tone: streamTone
+        )
+        if !controller.snapshotIsAuthoritative {
             WorkspaceStatusPill(
-                observedStatusLabel("Program"),
-                detail: controller.currentProgramScene?.name ?? "Unavailable",
-                tone: controller.snapshotIsAuthoritative ? .info : .warning,
-                symbol: "rectangle.inset.filled"
-            )
-            WorkspaceStatusPill(
-                controller.snapshotIsAuthoritative ? recordingLabel : observedStatusLabel("Recording"),
-                detail: controller.recording?.active == true ? controller.recording?.timecode : "No active take",
-                tone: recordingTone,
-                symbol: controller.recording?.active == true ? "record.circle.fill" : "record.circle"
-            )
-            WorkspaceStatusPill(
-                controller.snapshotIsAuthoritative ? streamLabel : observedStatusLabel("Stream"),
-                detail: controller.stream?.active == true ? controller.stream?.timecode : "Not live",
-                tone: streamTone
-            )
-            WorkspaceStatusPill(
-                preview.state.label,
-                detail: preview.state == .live ? "OBS Virtual Camera" : nil,
-                tone: previewTone,
-                symbol: preview.state == .live ? "video.fill" : "video.slash.fill"
+                snapshotDetail,
+                tone: .warning,
+                symbol: "clock.badge.exclamationmark"
             )
         }
     }
@@ -304,15 +298,9 @@ struct OBSControlPage: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 WorkspaceSectionHeading(
-                    title: "AI OBS Director",
-                    detail: "Natural-language control through the audited ClawStudio Live MCP boundary.",
+                    title: "OBS Director",
+                    detail: "Audited commands through the ClawStudio Live MCP boundary.",
                     accent: activeTheme.accent
-                )
-                Spacer()
-                WorkspaceStatusPill(
-                    directorStatusLabel,
-                    tone: directorStatusTone,
-                    symbol: directorNode?.status == .working ? "bolt.fill" : "terminal.fill"
                 )
             }
 
@@ -400,9 +388,12 @@ struct OBSControlPage: View {
             }
             .tint(activeTheme.accent)
 
-            Text("Scene and recording commands use audited MCP tools. Going live still requires the protected ClawStudio/HQ confirmation flow.")
-                .font(WorkspacePageTypography.body)
-                .foregroundStyle(.secondary)
+            Label(
+                "Going live still requires the protected ClawStudio/HQ confirmation flow.",
+                systemImage: "lock.shield"
+            )
+            .font(WorkspacePageTypography.body)
+            .foregroundStyle(.secondary)
         }
         .workspaceSectionCard(padding: 14, cornerRadius: 16, tintOpacity: 0.66)
     }
@@ -864,12 +855,15 @@ struct OBSControlPage: View {
     }
 
     private var directorIdentity: some View {
-        Label("OBS Director", systemImage: "scope")
+        Label(
+            directorStatusLabel,
+            systemImage: directorNode?.status == .working ? "bolt.fill" : "scope"
+        )
             .font(WorkspacePageTypography.metadata)
-            .foregroundStyle(.white.opacity(0.76))
+            .foregroundStyle(directorStatusTone.color)
             .padding(.horizontal, 8)
             .frame(height: 22)
-            .background(.white.opacity(0.07), in: Capsule())
+            .background(directorStatusTone.color.opacity(0.08), in: Capsule())
     }
 
     private func observedStatusLabel(_ label: String) -> String {
